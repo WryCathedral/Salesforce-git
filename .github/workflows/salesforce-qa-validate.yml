@@ -1,29 +1,27 @@
 #################################################################################################################################
-# PR validation only (single job per run — no skipped deploy job in the UI).
+# PR validation only — triggers on pull_request to develop (NOT on push). Pushing to a feature branch
+# updates an open PR via synchronize; a separate push: trigger would duplicate runs — do not add push.
+#
+# GitHub requires this workflow on the default branch (main) or the PR head branch.
 #
 # Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
-# Variables: SF_CLI_VERSION (optional)
-# Code Analyzer toggle — set either to the literal string "false" to skip (default: run):
-#   Repository variable: SF_RUN_CODE_ANALYZER
-#   Repository secret:    SF_RUN_CODE_ANALYZER   (optional; use if you prefer it in Secrets)
+# Variables: SF_CLI_VERSION (optional), SF_RUN_CODE_ANALYZER = false to skip Code Analyzer (vars only)
 #################################################################################################################################
 
-name: Salesforce QA — validate
+name: Salesforce QA - validate
 
 on:
   pull_request:
     branches:
       - develop
-    types: [opened, synchronize, reopened]
-    paths-ignore:
-      - README.md
+    types: [opened, synchronize, reopened, ready_for_review]
 
-# Run title: Validate - <branch> - <ISO date/time from PR>
-run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at }}
-
+# One run per PR; new commits cancel the previous in-flight validation for that PR.
 concurrency:
-  group: salesforce-qa-validate-${{ github.repository }}-${{ github.head_ref }}
+  group: salesforce-qa-validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+
+run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at || github.run_id }}
 
 env:
   SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
@@ -37,6 +35,7 @@ jobs:
     timeout-minutes: 200
     permissions:
       contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout
@@ -70,17 +69,17 @@ jobs:
           chmod 600 "$GITHUB_WORKSPACE/privatekey.key"
 
       - name: Install Salesforce Code Analyzer plugin
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         shell: pwsh
         run: ./.github/workflows/scripts/install_sf_code_analyzer.ps1
 
       - name: Run Code Analyzer on delta
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         shell: pwsh
         run: ./.github/workflows/scripts/run_sf_code_analyzer_on_delta.ps1
 
       - name: Upload Code Analyzer reports
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         uses: actions/upload-artifact@v4
         with:
           name: sf-code-analyzer
