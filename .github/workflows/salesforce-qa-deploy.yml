@@ -1,0 +1,84 @@
+#################################################################################################################################
+# Deploy to QA on push to develop only (single job per run — no skipped validate job in the UI).
+#
+# Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
+# Variables: SF_CLI_VERSION (optional)
+#################################################################################################################################
+
+name: Salesforce QA — deploy
+
+on:
+  push:
+    branches:
+      - develop
+    paths-ignore:
+      - README.md
+
+# Run title: Deploy - <branch> - <commit timestamp>
+run-name: Deploy - ${{ github.ref_name }} - ${{ github.event.head_commit.timestamp }}
+
+concurrency:
+  group: salesforce-qa-deploy-${{ github.repository }}-develop
+  cancel-in-progress: false
+
+env:
+  BUILD_SOURCEBRANCH: ${{ github.ref }}
+  SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+
+jobs:
+  deploying:
+    name: Deploying
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Salesforce CLI
+        shell: pwsh
+        run: ./.github/workflows/scripts/install_sf_cli.ps1 "${{ env.SF_CLI_VERSION }}"
+
+      - name: Install SFDX Git Delta plugin
+        shell: pwsh
+        run: ./.github/workflows/scripts/install_sfdx_git_delta_plugin.ps1
+
+      - name: Write JWT key file
+        shell: bash
+        env:
+          SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SF_JWT_PRIVATE_KEY" ]; then
+            echo "SF_JWT_PRIVATE_KEY secret is not set."
+            exit 1
+          fi
+          printf '%s\n' "$SF_JWT_PRIVATE_KEY" > "$GITHUB_WORKSPACE/privatekey.key"
+          chmod 600 "$GITHUB_WORKSPACE/privatekey.key"
+
+      - name: Authorize QA org (JWT)
+        shell: bash
+        env:
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+          SF_ALIAS: ${{ secrets.SF_ALIAS }}
+        run: |
+          bash ./.github/workflows/scripts/authenticate_org.sh \
+            "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
+            "$GITHUB_WORKSPACE/privatekey.key"
+
+      - name: Deploy delta
+        shell: pwsh
+        env:
+          SF_ALIAS: ${{ secrets.SF_ALIAS }}
+        run: ./.github/workflows/scripts/deploy_delta.ps1 "$env:SF_ALIAS"
