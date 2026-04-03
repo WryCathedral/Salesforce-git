@@ -106,7 +106,7 @@ jobs:
           SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
           SF_ALIAS: ${{ secrets.SF_ALIAS }}
         run: |
-          ./.github/workflows/scripts/authenticate_org.sh \
+          bash ./.github/workflows/scripts/authenticate_org.sh \
             "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
             "$GITHUB_WORKSPACE/privatekey.key"
 
@@ -171,7 +171,7 @@ jobs:
           SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
           SF_ALIAS: ${{ secrets.SF_ALIAS }}
         run: |
-          ./.github/workflows/scripts/authenticate_org.sh \
+          bash ./.github/workflows/scripts/authenticate_org.sh \
             "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
             "$GITHUB_WORKSPACE/privatekey.key"
 
