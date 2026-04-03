@@ -1,0 +1,14 @@
+name: Upload Code Analyzer reports
+inputs:
+  artifact_name:
+    description: Artifact name (include env prefix to avoid collisions)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@v6
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: reports/
+        if-no-files-found: warn

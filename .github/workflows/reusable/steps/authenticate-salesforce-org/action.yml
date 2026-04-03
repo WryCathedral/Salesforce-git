@@ -1,0 +1,28 @@
+name: Authorize Salesforce org (JWT)
+description: sf org login jwt via authenticate_org.sh
+inputs:
+  username:
+    required: true
+  is_dev_hub:
+    required: true
+  client_id:
+    required: true
+  instance_url:
+    required: true
+  alias:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: |
+        bash ./.github/workflows/reusable/scripts/authenticate_org.sh \
+          "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
+          "$GITHUB_WORKSPACE/privatekey.key"
+      shell: bash
+      env:
+        SF_USERNAME: ${{ inputs.username }}
+        SF_IS_DEV_HUB: ${{ inputs.is_dev_hub }}
+        SF_CLIENT_ID: ${{ inputs.client_id }}
+        SF_INSTANCE_URL: ${{ inputs.instance_url }}
+        SF_ALIAS: ${{ inputs.alias }}

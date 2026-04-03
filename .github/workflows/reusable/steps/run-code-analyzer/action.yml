@@ -1,0 +1,8 @@
+name: Run Code Analyzer on delta
+description: sgd delta + sf code-analyzer run on changed sources
+
+runs:
+  using: composite
+  steps:
+    - run: ./.github/workflows/reusable/scripts/run_sf_code_analyzer_on_delta.ps1
+      shell: pwsh
