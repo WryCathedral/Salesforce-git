@@ -24,6 +24,8 @@ jobs:
       SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
       BUILD_SOURCEBRANCH: ${{ github.ref }}
       SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      # Composite actions cannot use vars.*; map repo/org vars into env for validate_delta
+      SF_RUN_CODE_ANALYZER: ${{ vars.SF_RUN_CODE_ANALYZER }}
       SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
       SF_USERNAME: ${{ secrets.SF_USERNAME }}
       SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
