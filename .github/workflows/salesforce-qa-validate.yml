@@ -1,0 +1,114 @@
+#################################################################################################################################
+# PR validation only (single job per run — no skipped deploy job in the UI).
+#
+# Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
+# Variables: SF_CLI_VERSION (optional)
+# Code Analyzer toggle — set either to the literal string "false" to skip (default: run):
+#   Repository variable: SF_RUN_CODE_ANALYZER
+#   Repository secret:    SF_RUN_CODE_ANALYZER   (optional; use if you prefer it in Secrets)
+#################################################################################################################################
+
+name: Salesforce QA — validate
+
+on:
+  pull_request:
+    branches:
+      - develop
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - README.md
+
+# Run title: Validate - <branch> - <ISO date/time from PR>
+run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at }}
+
+concurrency:
+  group: salesforce-qa-validate-${{ github.repository }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
+env:
+  SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
+  BUILD_SOURCEBRANCH: ${{ github.ref }}
+  SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+
+jobs:
+  validating:
+    name: Validating
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js (for Salesforce CLI install)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Salesforce CLI
+        shell: pwsh
+        run: ./.github/workflows/scripts/install_sf_cli.ps1 "${{ env.SF_CLI_VERSION }}"
+
+      - name: Install SFDX Git Delta plugin
+        shell: pwsh
+        run: ./.github/workflows/scripts/install_sfdx_git_delta_plugin.ps1
+
+      - name: Write JWT key file
+        shell: bash
+        env:
+          SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+        run: |
+          if [ -z "$SF_JWT_PRIVATE_KEY" ]; then
+            echo "SF_JWT_PRIVATE_KEY secret is not set."
+            exit 1
+          fi
+          printf '%s\n' "$SF_JWT_PRIVATE_KEY" > "$GITHUB_WORKSPACE/privatekey.key"
+          chmod 600 "$GITHUB_WORKSPACE/privatekey.key"
+
+      - name: Install Salesforce Code Analyzer plugin
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        shell: pwsh
+        run: ./.github/workflows/scripts/install_sf_code_analyzer.ps1
+
+      - name: Run Code Analyzer on delta
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        shell: pwsh
+        run: ./.github/workflows/scripts/run_sf_code_analyzer_on_delta.ps1
+
+      - name: Upload Code Analyzer reports
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: sf-code-analyzer
+          path: reports/
+          if-no-files-found: warn
+
+      - name: Authorize QA org (JWT)
+        shell: bash
+        env:
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+          SF_ALIAS: ${{ secrets.SF_ALIAS }}
+        run: |
+          bash ./.github/workflows/scripts/authenticate_org.sh \
+            "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
+            "$GITHUB_WORKSPACE/privatekey.key"
+
+      - name: Validate delta (dry-run)
+        shell: pwsh
+        env:
+          SF_ALIAS: ${{ secrets.SF_ALIAS }}
+        run: ./.github/workflows/scripts/validate_delta.ps1 "$env:SF_ALIAS"
+
+      - name: Upload delta package artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Delta-Package
+          path: artifacts/
+          if-no-files-found: warn
