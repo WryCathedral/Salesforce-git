@@ -7,6 +7,11 @@ on:
     branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review]
 
+# Reusable sf-delta-validate.yml requests pull-requests: read; caller must grant it.
+permissions:
+  contents: read
+  pull-requests: read
+
 concurrency:
   group: sf-qa-validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
