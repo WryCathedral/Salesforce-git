@@ -1,0 +1,22 @@
+# Production: PR validation → main. GitHub Environment "production".
+name: SF Delta · PROD · validate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '.github/workflows/**'
+
+concurrency:
+  group: sf-prod-validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: Validate [PROD] ${{ github.head_ref }} · ${{ github.event.pull_request.updated_at || github.run_id }}
+
+jobs:
+  validating:
+    uses: ./.github/workflows/reusable/sf-delta-validate.yml
+    with:
+      environment_name: production
+    secrets: inherit

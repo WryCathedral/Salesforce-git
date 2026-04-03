@@ -1,0 +1,12 @@
+name: Install Salesforce CLI
+description: Install @salesforce/cli globally via npm
+inputs:
+  sf_cli_version:
+    description: CLI version (e.g. 2.100.0)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: ./.github/workflows/reusable/scripts/install_sf_cli.ps1 "${{ inputs.sf_cli_version }}"
+      shell: pwsh

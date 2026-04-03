@@ -1,0 +1,24 @@
+# UAT: deploy on merge into uat (or manual). GitHub Environment "uat".
+name: SF Delta · UAT · deploy
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [uat]
+    paths-ignore:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sf-uat-deploy-${{ github.repository }}-uat
+  cancel-in-progress: false
+
+run-name: Deploy [UAT] ${{ github.event_name == 'workflow_dispatch' && 'manual' || format('PR {0}', github.event.pull_request.number) }} · ${{ github.sha }}
+
+jobs:
+  deploying:
+    uses: ./.github/workflows/reusable/sf-delta-deploy.yml
+    with:
+      environment_name: uat
+      target_branch: uat
+    secrets: inherit

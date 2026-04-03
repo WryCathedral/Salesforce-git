@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ConnectedApp xmlns="http://soap.sforce.com/2006/04/metadata">
+    <contactEmail>varun.c.chaudhary@pwc.com</contactEmail>
+    <label>ADO Connect</label>
+    <oauthConfig>
+        <callbackUrl>http://localhost:1717/OauthRedirect</callbackUrl>
+        <certificate>MIIDbTCCAlWgAwIBAgIUZQiwEUOGhu1bY5k+WbmnP98GWdUwDQYJKoZIhvcNAQEL
+BQAwXzELMAkGA1UEBhMCSU4xCzAJBgNVBAgMAkRMMQswCQYDVQQHDAJETDEMMAoG
+A1UECgwDcHdjMSgwJgYJKoZIhvcNAQkBFhl2YXJ1bi5jLmNoYXVkaGFyeUBwd2Mu
+Y29tMB4XDTI1MTAxMDA5MTMzOFoXDTI2MTAxMDA5MTMzOFowXzELMAkGA1UEBhMC
+SU4xCzAJBgNVBAgMAkRMMQswCQYDVQQHDAJETDEMMAoGA1UECgwDcHdjMSgwJgYJ
+KoZIhvcNAQkBFhl2YXJ1bi5jLmNoYXVkaGFyeUBwd2MuY29tMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAt4g5GMdF36VyviCZz24Et0xxMpAU9xvgMmYE
+QZTM9Go833dC3pjzdEo8Cg5zrpDXdwPTBo4dbdZ6GlJ3RlPLKgYrW3bBmtA1xCTX
+ZsFJLEILe7Tf6q8hSvd/dkrDWVaaVB3vwY1BM8acpHKf1PgNnV+DN+ZQTh1EBlBz
+F7TZxRMeICXjm5fhb4DXKbeSvwjeLmX/16uYGPmcNfPZVkExNV4abqiHVdtotdrQ
+dahKuPARcvEEHrcmPvHUwenK/2tDdwsHmynlUIgbGzdgOYiEHKU0Z6RKp5MqUacE
+AliKggF5Hd2sGWk6tfqTjyP0y29Gn3XPZOzQZvQxydnzfwCd7QIDAQABoyEwHzAd
+BgNVHQ4EFgQUFb8wUbnP8t0x8S7RsmoPOqNHpsQwDQYJKoZIhvcNAQELBQADggEB
+AE87HO22v+OOedOsSQLBCuyGj+E9O+EOOSmeInmxCxiq9AwLUCe+WNar9vmCI6cD
+atqYPxXCqMQBAhyoy5KOlvsagfE4ZApmFPor08YWCswuCNyy39fazY0718Lol9Mw
+e9Grdi8472RLYLykZDJifITnBFB3S94dqvj36aIocOeOusb6AUrvVGQKc5oJlncH
+RA1qRnWWpcq5nHd07sDRlnmahkh3BSAL2ihN7iu8wp/gTdAbIp5XxeuPPBjdvQGa
+zggbaeobCa096d0vx8PINAPyKmYX6tKZ/J9dgffZVbkGiLiEoSnm3ZEHd02vGfxq
+54YmEs7Lz7050q5PLdL/WB0=</certificate>
+        <isAdminApproved>true</isAdminApproved>
+        <isClientCredentialEnabled>false</isClientCredentialEnabled>
+        <isCodeCredentialEnabled>false</isCodeCredentialEnabled>
+        <isCodeCredentialPostOnly>false</isCodeCredentialPostOnly>
+        <isConsumerSecretOptional>false</isConsumerSecretOptional>
+        <isIntrospectAllTokens>false</isIntrospectAllTokens>
+        <isNamedUserJwtEnabled>false</isNamedUserJwtEnabled>
+        <isSecretRequiredForRefreshToken>false</isSecretRequiredForRefreshToken>
+        <scopes>Basic</scopes>
+        <scopes>Api</scopes>
+        <scopes>Web</scopes>
+        <scopes>RefreshToken</scopes>
+    </oauthConfig>
+    <oauthPolicy>
+        <ipRelaxation>BYPASS</ipRelaxation>
+        <refreshTokenPolicy>infinite</refreshTokenPolicy>
+    </oauthPolicy>
+    <profileName>System Administrator</profileName>
+</ConnectedApp>

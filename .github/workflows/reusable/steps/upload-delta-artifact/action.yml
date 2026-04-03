@@ -1,0 +1,13 @@
+name: Upload delta package artifacts
+inputs:
+  artifact_name:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@v6
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: artifacts/
+        if-no-files-found: warn

@@ -1,0 +1,22 @@
+# SIT: PR validation → sit. GitHub Environment "sit".
+name: SF Delta · SIT · validate
+
+on:
+  pull_request:
+    branches: [sit]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '.github/workflows/**'
+
+concurrency:
+  group: sf-sit-validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: Validate [SIT] ${{ github.head_ref }} · ${{ github.event.pull_request.updated_at || github.run_id }}
+
+jobs:
+  validating:
+    uses: ./.github/workflows/reusable/sf-delta-validate.yml
+    with:
+      environment_name: sit
+    secrets: inherit
