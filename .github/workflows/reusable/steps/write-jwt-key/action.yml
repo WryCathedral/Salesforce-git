@@ -1,0 +1,20 @@
+name: Write JWT key file
+description: Write Connected App JWT private key to privatekey.key in workspace
+inputs:
+  jwt_key:
+    description: PEM contents (pass secrets.SF_JWT_PRIVATE_KEY from workflow)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - run: |
+        if [ -z "$JWT_KEY" ]; then
+          echo "JWT key is not set."
+          exit 1
+        fi
+        printf '%s\n' "$JWT_KEY" > "$GITHUB_WORKSPACE/privatekey.key"
+        chmod 600 "$GITHUB_WORKSPACE/privatekey.key"
+      shell: bash
+      env:
+        JWT_KEY: ${{ inputs.jwt_key }}

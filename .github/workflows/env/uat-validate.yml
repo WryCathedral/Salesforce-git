@@ -1,0 +1,22 @@
+# UAT: PR validation → uat. GitHub Environment "uat".
+name: SF Delta · UAT · validate
+
+on:
+  pull_request:
+    branches: [uat]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - '.github/workflows/**'
+
+concurrency:
+  group: sf-uat-validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: Validate [UAT] ${{ github.head_ref }} · ${{ github.event.pull_request.updated_at || github.run_id }}
+
+jobs:
+  validating:
+    uses: ./.github/workflows/reusable/sf-delta-validate.yml
+    with:
+      environment_name: uat
+    secrets: inherit

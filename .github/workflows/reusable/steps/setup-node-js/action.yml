@@ -1,0 +1,14 @@
+name: Setup Node.js
+description: Node for npm global Salesforce CLI install
+inputs:
+  node_version:
+    description: Node major version (LTS aligned with Actions JS runtime)
+    required: false
+    default: '24'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ inputs.node_version }}

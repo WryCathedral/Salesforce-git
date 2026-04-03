@@ -1,0 +1,84 @@
+#requires -Version 7.0
+<#
+.SYNOPSIS
+    Deploy git-delta package to a Salesforce org.
+    Expects env from reusable workflows: BUILD_SOURCEBRANCH (merge base or dispatch target).
+#>
+[CmdletBinding()]
+param(
+    [Parameter(Mandatory = $true, Position = 0)]
+    [ValidateNotNullOrEmpty()]
+    [string]$Alias
+)
+
+function Assert-SfExitCode {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$StepName
+    )
+    if ($null -ne $LASTEXITCODE -and $LASTEXITCODE -ne 0) {
+        Write-Host "::error::Salesforce CLI failed: $StepName (exit code $LASTEXITCODE)"
+        exit [Math]::Min([int]$LASTEXITCODE, 255)
+    }
+}
+
+function Invoke-DeltaDeploy {
+    $sourceBranch = $env:BUILD_SOURCEBRANCH
+
+    sf alias list
+    Assert-SfExitCode 'sf alias list'
+
+    sf sgd source delta --to 'HEAD' --from 'HEAD^' --output . `
+        --ignore-destructive ignoredestructive `
+        --include-destructive includedestructive `
+        --ignore-file ignorefile
+    Assert-SfExitCode 'sf sgd source delta'
+
+    if (-not (Test-Path -LiteralPath 'package/package.xml')) {
+        Write-Host '::error::package/package.xml not found after delta generation.'
+        exit 1
+    }
+    if (-not (Test-Path -LiteralPath 'destructiveChanges/destructiveChanges.xml')) {
+        Write-Host '::error::destructiveChanges/destructiveChanges.xml not found after delta generation.'
+        exit 1
+    }
+
+    Write-Host '--- package.xml ---'
+    Get-Content -LiteralPath 'package/package.xml'
+    Write-Host '--- destructiveChanges.xml ---'
+    Get-Content -LiteralPath 'destructiveChanges/destructiveChanges.xml'
+
+    $runTests = $sourceBranch -match 'refs/heads/main'
+    if ($runTests) {
+        Write-Host 'Deploying with RunLocalTests (main branch).'
+        sf project deploy start --manifest package/package.xml --post-destructive-changes destructiveChanges/destructiveChanges.xml `
+            --ignore-conflicts --target-org $Alias --test-level RunLocalTests --wait 120 --verbose
+    }
+    else {
+        Write-Host 'Deploying with NoTestRun.'
+        sf project deploy start --manifest package/package.xml --post-destructive-changes destructiveChanges/destructiveChanges.xml `
+            --ignore-conflicts --target-org $Alias --test-level NoTestRun --wait 120 --verbose
+    }
+    Assert-SfExitCode 'sf project deploy start'
+
+    $deploymentStatus = sf project deploy report --target-org $Alias --use-most-recent --wait 120
+    Assert-SfExitCode 'sf project deploy report'
+
+    if ($deploymentStatus | Select-String -Pattern 'Succeeded' -Quiet) {
+        Write-Host 'Deployment succeeded.'
+        return
+    }
+    if ($deploymentStatus | Select-String -Pattern 'Failed' -Quiet) {
+        Write-Host '::error::Deployment failed in org.'
+        exit 1
+    }
+    if ($deploymentStatus | Select-String -Pattern 'Canceled' -Quiet) {
+        Write-Host '::error::Deployment canceled in org.'
+        exit 1
+    }
+
+    Write-Host '::error::Unexpected deployment status; expected Succeeded, Failed, or Canceled.'
+    exit 1
+}
+
+Invoke-DeltaDeploy
