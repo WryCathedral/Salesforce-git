@@ -15,7 +15,7 @@ run-name: Validate [QA] ${{ github.head_ref }} · ${{ github.event.pull_request.
 
 jobs:
   validating:
-    uses: ./.github/workflows/reusable/sf-delta-validate.yml
+    uses: ./.github/workflows/sf-delta-validate.yml
     with:
       environment_name: qa
     secrets: inherit

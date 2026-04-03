@@ -1,5 +1,5 @@
-# Reusable workflow: SFDX git-delta validation (dry-run) against a Salesforce org.
-# Composite actions: reusable/steps/<name>/action.yml · PowerShell/bash: reusable/scripts/
+# Reusable workflow: SFDX git-delta validation (dry-run). Must live at .github/workflows/ root (GitHub requirement).
+# Composite actions: reusable/steps/<name>/action.yml · scripts: reusable/scripts/
 on:
   workflow_call:
     inputs:
