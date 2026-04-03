@@ -5,8 +5,6 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - '.github/workflows/**'
 
 concurrency:
   group: sf-prod-validate-pr-${{ github.event.pull_request.number }}
