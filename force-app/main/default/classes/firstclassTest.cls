@@ -7,6 +7,6 @@ public class firstclassTest {
 
         // You can include assertions if the method updates data or returns a value.
         // Since 'main' only prints a debug statement, we just call it to confirm it runs without errors.
-        System.assert(true, 'Method executed successfully.');
+        System.assert(true, 'Method executed successfully');
     }
 }
