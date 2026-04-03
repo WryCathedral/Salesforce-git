@@ -1,22 +1,8 @@
-# Composite: full git-delta validation (replaces reusable workflow). Caller passes secrets explicitly (inherit is for reusable workflows only).
-name: Delta validate pipeline
+# Composite: full git-delta validation. Caller job must set env (including SF_* from secrets) — do not use secrets: on the step.
+name: Validate delta pipeline
 description: Checkout, CLI, JWT, optional Code Analyzer, authenticate, validate delta, upload artifacts
 inputs:
   environment_name:
-    required: true
-
-secrets:
-  SF_JWT_PRIVATE_KEY:
-    required: true
-  SF_USERNAME:
-    required: true
-  SF_IS_DEV_HUB:
-    required: true
-  SF_CLIENT_ID:
-    required: true
-  SF_INSTANCE_URL:
-    required: true
-  SF_ALIAS:
     required: true
 
 runs:
@@ -36,7 +22,7 @@ runs:
 
     - uses: ./.github/workflows/reusable/steps/write-jwt-key/action.yml
       with:
-        jwt_key: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+        jwt_key: ${{ env.SF_JWT_PRIVATE_KEY }}
 
     - uses: ./.github/workflows/reusable/steps/install-code-analyzer/action.yml
       if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
@@ -51,15 +37,16 @@ runs:
 
     - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org/action.yml
       with:
-        username: ${{ secrets.SF_USERNAME }}
-        is_dev_hub: ${{ secrets.SF_IS_DEV_HUB }}
-        client_id: ${{ secrets.SF_CLIENT_ID }}
-        instance_url: ${{ secrets.SF_INSTANCE_URL }}
-        alias: ${{ secrets.SF_ALIAS }}
+        username: ${{ env.SF_USERNAME }}
+        is_dev_hub: ${{ env.SF_IS_DEV_HUB }}
+        client_id: ${{ env.SF_CLIENT_ID }}
+        instance_url: ${{ env.SF_INSTANCE_URL }}
+        alias: ${{ env.SF_ALIAS }}
 
-    - uses: ./.github/workflows/reusable/steps/validate-delta/action.yml
-      with:
-        sf_alias: ${{ secrets.SF_ALIAS }}
+    - run: ./.github/workflows/reusable/scripts/validate_delta.ps1 "$env:SF_ALIAS"
+      shell: pwsh
+      env:
+        SF_ALIAS: ${{ env.SF_ALIAS }}
 
     - uses: ./.github/workflows/reusable/steps/upload-delta-artifact/action.yml
       with:

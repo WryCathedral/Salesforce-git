@@ -27,15 +27,14 @@ jobs:
     env:
       SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
       BUILD_SOURCEBRANCH: ${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'develop') || format('refs/heads/{0}', github.base_ref) }}
+      SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
+      SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+      SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+      SF_ALIAS: ${{ secrets.SF_ALIAS }}
     steps:
-      - uses: ./.github/workflows/reusable/steps/delta-deploy-pipeline/action.yml
+      - uses: ./.github/workflows/reusable/steps/deploy_delta/action.yml
         with:
           environment_name: qa
           target_branch: develop
-        secrets:
-          SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
-          SF_USERNAME: ${{ secrets.SF_USERNAME }}
-          SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
-          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
-          SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
-          SF_ALIAS: ${{ secrets.SF_ALIAS }}
