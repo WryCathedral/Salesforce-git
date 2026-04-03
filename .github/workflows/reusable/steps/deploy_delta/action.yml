@@ -1,22 +1,14 @@
-# Composite: full git-delta deploy. Caller job must set env (including SF_* from secrets).
-# Local composite actions: use the directory path (contains action.yml), not .../action.yml.
+# Composite: deploy delta (checkout runs in parent workflow before this action loads).
+# Local composite actions: directory path only for nested uses:.
 name: Deploy delta pipeline
-description: Checkout at merge/ref, CLI, JWT, authenticate, deploy delta
+description: CLI, JWT, authenticate, deploy delta
 inputs:
   environment_name:
-    required: true
-  target_branch:
-    description: Branch name for workflow_dispatch checkout (e.g. develop, main)
     required: true
 
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-        ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || github.event.pull_request.merge_commit_sha }}
-
     - uses: ./.github/workflows/reusable/steps/setup-node-js
 
     - uses: ./.github/workflows/reusable/steps/install-salesforce-cli

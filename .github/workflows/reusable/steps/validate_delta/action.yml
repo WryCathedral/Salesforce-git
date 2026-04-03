@@ -1,7 +1,7 @@
 # Composite: full git-delta validation. Caller job must set env (including SF_* from secrets).
 # Local composite actions: use the directory path (contains action.yml), not .../action.yml.
 name: Validate delta pipeline
-description: Checkout, CLI, JWT, optional Code Analyzer, authenticate, validate delta, upload artifacts
+description: CLI, JWT, optional Code Analyzer, authenticate, validate delta, upload artifacts (checkout is first step of parent workflow)
 inputs:
   environment_name:
     required: true
@@ -9,10 +9,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: actions/checkout@v6
-      with:
-        fetch-depth: 0
-
     - uses: ./.github/workflows/reusable/steps/setup-node-js
 
     - uses: ./.github/workflows/reusable/steps/install-salesforce-cli

@@ -31,6 +31,11 @@ jobs:
       SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
       SF_ALIAS: ${{ secrets.SF_ALIAS }}
     steps:
+      # Required before any local composite action — workspace must contain action.yml
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
       - uses: ./.github/workflows/reusable/steps/validate_delta
         with:
           environment_name: qa
