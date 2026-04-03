@@ -5,7 +5,7 @@
 # Variables: SF_CLI_VERSION (optional)
 #################################################################################################################################
 
-name: Salesforce QA — deploy
+name: Salesforce QA - deploy
 
 on:
   push:
@@ -14,8 +14,8 @@ on:
     paths-ignore:
       - README.md
 
-# Run title: Deploy - <branch> - <commit timestamp>
-run-name: Deploy - ${{ github.ref_name }} - ${{ github.event.head_commit.timestamp }}
+# Run title: Deploy - branch - timestamp (fallback if head_commit missing)
+run-name: Deploy - ${{ github.ref_name }} - ${{ github.event.head_commit.timestamp || github.sha }}
 
 concurrency:
   group: salesforce-qa-deploy-${{ github.repository }}-develop
