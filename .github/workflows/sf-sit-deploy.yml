@@ -17,8 +17,19 @@ run-name: Deploy [SIT] ${{ github.event_name == 'workflow_dispatch' && 'manual' 
 
 jobs:
   deploying:
-    uses: ./.github/workflows/sf-delta-deploy.yml
-    with:
-      environment_name: sit
-      target_branch: sit
-    secrets: inherit
+    name: Deploying (sit)
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: sit
+    permissions:
+      contents: read
+    env:
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      BUILD_SOURCEBRANCH: ${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'sit') || format('refs/heads/{0}', github.base_ref) }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-deploy-pipeline/action.yml
+        with:
+          environment_name: sit
+          target_branch: sit
+        secrets: inherit

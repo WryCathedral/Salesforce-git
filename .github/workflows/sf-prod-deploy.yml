@@ -17,8 +17,19 @@ run-name: Deploy [PROD] ${{ github.event_name == 'workflow_dispatch' && 'manual'
 
 jobs:
   deploying:
-    uses: ./.github/workflows/sf-delta-deploy.yml
-    with:
-      environment_name: production
-      target_branch: main
-    secrets: inherit
+    name: Deploying (production)
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      BUILD_SOURCEBRANCH: ${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'main') || format('refs/heads/{0}', github.base_ref) }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-deploy-pipeline/action.yml
+        with:
+          environment_name: production
+          target_branch: main
+        secrets: inherit

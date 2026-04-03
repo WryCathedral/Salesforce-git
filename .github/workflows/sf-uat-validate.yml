@@ -14,7 +14,18 @@ run-name: Validate [UAT] ${{ github.head_ref }} · ${{ github.event.pull_request
 
 jobs:
   validating:
-    uses: ./.github/workflows/sf-delta-validate.yml
-    with:
-      environment_name: uat
-    secrets: inherit
+    name: Validating (uat)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: uat
+    permissions:
+      contents: read
+    env:
+      SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
+      BUILD_SOURCEBRANCH: ${{ github.ref }}
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-validate-pipeline/action.yml
+        with:
+          environment_name: uat
+        secrets: inherit
