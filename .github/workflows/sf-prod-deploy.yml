@@ -1,0 +1,35 @@
+# Production: deploy on merge into main (or manual). GitHub Environment "production".
+name: SF Delta · PROD · deploy
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths-ignore:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sf-prod-deploy-${{ github.repository }}-main
+  cancel-in-progress: false
+
+run-name: Deploy [PROD] ${{ github.event_name == 'workflow_dispatch' && 'manual' || format('PR {0}', github.event.pull_request.number) }} · ${{ github.sha }}
+
+jobs:
+  deploying:
+    name: Deploying (production)
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      BUILD_SOURCEBRANCH: ${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'main') || format('refs/heads/{0}', github.base_ref) }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-deploy-pipeline/action.yml
+        with:
+          environment_name: production
+          target_branch: main
+        secrets: inherit

@@ -1,0 +1,31 @@
+# Production: PR validation → main. GitHub Environment "production".
+name: SF Delta · PROD · validate
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: sf-prod-validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: Validate [PROD] ${{ github.head_ref }} · ${{ github.event.pull_request.updated_at || github.run_id }}
+
+jobs:
+  validating:
+    name: Validating (production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: production
+    permissions:
+      contents: read
+    env:
+      SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
+      BUILD_SOURCEBRANCH: ${{ github.ref }}
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-validate-pipeline/action.yml
+        with:
+          environment_name: production
+        secrets: inherit

@@ -1,0 +1,31 @@
+# QA: PR validation → develop. GitHub Environment "qa".
+name: SF Delta · QA · validate
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: sf-qa-validate-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+run-name: Validate [QA] ${{ github.head_ref }} · ${{ github.event.pull_request.updated_at || github.run_id }}
+
+jobs:
+  validating:
+    name: Validating (qa)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: qa
+    permissions:
+      contents: read
+    env:
+      SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
+      BUILD_SOURCEBRANCH: ${{ github.ref }}
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-validate-pipeline/action.yml
+        with:
+          environment_name: qa
+        secrets: inherit

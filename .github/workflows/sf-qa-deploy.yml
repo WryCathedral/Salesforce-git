@@ -1,0 +1,35 @@
+# QA: deploy on merge into develop (or manual). GitHub Environment "qa".
+name: SF Delta · QA · deploy
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop]
+    paths-ignore:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+concurrency:
+  group: sf-qa-deploy-${{ github.repository }}-develop
+  cancel-in-progress: false
+
+run-name: Deploy [QA] ${{ github.event_name == 'workflow_dispatch' && 'manual' || format('PR {0}', github.event.pull_request.number) }} · ${{ github.sha }}
+
+jobs:
+  deploying:
+    name: Deploying (qa)
+    if: github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true)
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    environment: qa
+    permissions:
+      contents: read
+    env:
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      BUILD_SOURCEBRANCH: ${{ github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'develop') || format('refs/heads/{0}', github.base_ref) }}
+    steps:
+      - uses: ./.github/workflows/reusable/steps/delta-deploy-pipeline/action.yml
+        with:
+          environment_name: qa
+          target_branch: develop
+        secrets: inherit

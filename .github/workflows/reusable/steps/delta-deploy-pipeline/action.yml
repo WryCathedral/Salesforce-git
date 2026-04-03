@@ -1,0 +1,41 @@
+# Composite: full git-delta deploy (replaces reusable workflow). Job must set env + environment + secrets: inherit.
+name: Delta deploy pipeline
+description: Checkout at merge/ref, CLI, JWT, authenticate, deploy delta
+inputs:
+  environment_name:
+    required: true
+  target_branch:
+    description: Branch name for workflow_dispatch checkout (e.g. develop, main)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
+        ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || github.event.pull_request.merge_commit_sha }}
+
+    - uses: ./.github/workflows/reusable/steps/setup-node-js/action.yml
+
+    - uses: ./.github/workflows/reusable/steps/install-salesforce-cli/action.yml
+      with:
+        sf_cli_version: ${{ env.SF_CLI_VERSION }}
+
+    - uses: ./.github/workflows/reusable/steps/install-git-delta-plugin/action.yml
+
+    - uses: ./.github/workflows/reusable/steps/write-jwt-key/action.yml
+      with:
+        jwt_key: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+
+    - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org/action.yml
+      with:
+        username: ${{ secrets.SF_USERNAME }}
+        is_dev_hub: ${{ secrets.SF_IS_DEV_HUB }}
+        client_id: ${{ secrets.SF_CLIENT_ID }}
+        instance_url: ${{ secrets.SF_INSTANCE_URL }}
+        alias: ${{ secrets.SF_ALIAS }}
+
+    - uses: ./.github/workflows/reusable/steps/deploy-delta/action.yml
+      with:
+        sf_alias: ${{ secrets.SF_ALIAS }}
