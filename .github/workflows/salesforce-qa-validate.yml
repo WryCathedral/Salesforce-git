@@ -1,8 +1,12 @@
 #################################################################################################################################
 # PR validation only (single job per run — no skipped deploy job in the UI).
 #
-# GitHub requires this workflow file to exist on the repository DEFAULT branch (or on the PR head
-# branch) for pull_request runs to be registered. If checks never appear, merge .github/ into main.
+# GitHub requires this workflow file on the DEFAULT branch (main) or the PR head branch.
+#
+# If this check never appears on a PR:
+#   - Resolve merge conflicts (GitHub may not run workflows until the PR merges cleanly).
+#   - Repo Settings → Actions → General: allow Actions, and approve waiting runs if prompted.
+#   - Fork PRs: enable Actions on the fork; first-time contributor workflows may need approval.
 #
 # Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
 # Variables: SF_CLI_VERSION (optional)
@@ -11,18 +15,18 @@
 #   Repository secret:    SF_RUN_CODE_ANALYZER   (optional; use if you prefer it in Secrets)
 #################################################################################################################################
 
-name: Salesforce QA — validate
+name: Salesforce QA - validate
 
 on:
   pull_request:
     branches:
       - develop
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - README.md
+    # Do not use paths-ignore here: if the only changed file matched ignore rules, the workflow
+    # would not run and no check would appear on the PR.
 
-# Run title: Validate - <branch> - <ISO date/time from PR>
-run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at }}
+# Run title: Validate - <branch> - <date> (PR number helps find the run in Actions)
+run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at || github.run_id }}
 
 concurrency:
   group: salesforce-qa-validate-${{ github.repository }}-${{ github.head_ref }}
@@ -40,6 +44,7 @@ jobs:
     timeout-minutes: 200
     permissions:
       contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout
