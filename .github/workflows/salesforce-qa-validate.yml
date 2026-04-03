@@ -1,17 +1,11 @@
 #################################################################################################################################
-# PR validation only (single job per run — no skipped deploy job in the UI).
+# PR validation only — triggers on pull_request to develop (NOT on push). Pushing to a feature branch
+# updates an open PR via synchronize; a separate push: trigger would duplicate runs — do not add push.
 #
-# GitHub requires this workflow file on the DEFAULT branch (main) or the PR head branch.
-#
-# If this check never appears on a PR:
-#   - Resolve merge conflicts (GitHub may not run workflows until the PR merges cleanly).
-#   - Repo Settings → Actions → General: allow Actions, and approve waiting runs if prompted.
-#   - Fork PRs: enable Actions on the fork; first-time contributor workflows may need approval.
+# GitHub requires this workflow on the default branch (main) or the PR head branch.
 #
 # Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
-# Variables: SF_CLI_VERSION (optional)
-# Code Analyzer toggle — repository variable SF_RUN_CODE_ANALYZER = "false" to skip (default: run).
-# (Secrets cannot be used in step `if:` expressions; use Variables only for this flag.)
+# Variables: SF_CLI_VERSION (optional), SF_RUN_CODE_ANALYZER = false to skip Code Analyzer (vars only)
 #################################################################################################################################
 
 name: Salesforce QA - validate
@@ -21,15 +15,13 @@ on:
     branches:
       - develop
     types: [opened, synchronize, reopened, ready_for_review]
-    # Do not use paths-ignore here: if the only changed file matched ignore rules, the workflow
-    # would not run and no check would appear on the PR.
 
-# Run title: Validate - <branch> - <date> (PR number helps find the run in Actions)
-run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at || github.run_id }}
-
+# One run per PR; new commits cancel the previous in-flight validation for that PR.
 concurrency:
-  group: salesforce-qa-validate-${{ github.repository }}-${{ github.head_ref }}
+  group: salesforce-qa-validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
+
+run-name: Validate - ${{ github.head_ref }} - ${{ github.event.pull_request.updated_at || github.run_id }}
 
 env:
   SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ format('refs/heads/{0}', github.base_ref) }}
