@@ -1,6 +1,9 @@
 #################################################################################################################################
 # PR validation only (single job per run — no skipped deploy job in the UI).
 #
+# GitHub requires this workflow file to exist on the repository DEFAULT branch (or on the PR head
+# branch) for pull_request runs to be registered. If checks never appear, merge .github/ into main.
+#
 # Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
 # Variables: SF_CLI_VERSION (optional)
 # Code Analyzer toggle — set either to the literal string "false" to skip (default: run):
@@ -14,7 +17,7 @@ on:
   pull_request:
     branches:
       - develop
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths-ignore:
       - README.md
 
