@@ -32,4 +32,10 @@ jobs:
         with:
           environment_name: sit
           target_branch: sit
-        secrets: inherit
+        secrets:
+          SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+          SF_USERNAME: ${{ secrets.SF_USERNAME }}
+          SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
+          SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+          SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+          SF_ALIAS: ${{ secrets.SF_ALIAS }}

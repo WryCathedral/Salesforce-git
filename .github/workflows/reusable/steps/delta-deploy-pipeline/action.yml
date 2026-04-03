@@ -1,4 +1,4 @@
-# Composite: full git-delta deploy (replaces reusable workflow). Job must set env + environment + secrets: inherit.
+# Composite: full git-delta deploy. Caller passes secrets explicitly (inherit is for reusable workflows only).
 name: Delta deploy pipeline
 description: Checkout at merge/ref, CLI, JWT, authenticate, deploy delta
 inputs:
@@ -6,6 +6,20 @@ inputs:
     required: true
   target_branch:
     description: Branch name for workflow_dispatch checkout (e.g. develop, main)
+    required: true
+
+secrets:
+  SF_JWT_PRIVATE_KEY:
+    required: true
+  SF_USERNAME:
+    required: true
+  SF_IS_DEV_HUB:
+    required: true
+  SF_CLIENT_ID:
+    required: true
+  SF_INSTANCE_URL:
+    required: true
+  SF_ALIAS:
     required: true
 
 runs:
