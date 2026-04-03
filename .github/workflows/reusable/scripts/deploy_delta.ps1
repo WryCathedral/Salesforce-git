@@ -25,6 +25,10 @@ function Assert-SfExitCode {
 function Invoke-DeltaDeploy {
     $sourceBranch = $env:BUILD_SOURCEBRANCH
 
+    Write-Host ('*' * 107)
+    Write-Host '*********************** Delta deployment starting  ********************************************************'
+    Write-Host ('*' * 107)
+
     sf alias list
     Assert-SfExitCode 'sf alias list'
 
@@ -65,19 +69,27 @@ function Invoke-DeltaDeploy {
     Assert-SfExitCode 'sf project deploy report'
 
     if ($deploymentStatus | Select-String -Pattern 'Succeeded' -Quiet) {
-        Write-Host 'Deployment succeeded.'
+        Write-Host ('****************************************************************************************')
+        Write-Host '*********************** Deployment Successful  ******************************************'
+        Write-Host ('****************************************************************************************')
         return
     }
     if ($deploymentStatus | Select-String -Pattern 'Failed' -Quiet) {
-        Write-Host '::error::Deployment failed in org.'
+        Write-Host ('************************************************************************************')
+        Write-Host '*********************** Deployment Failed  ******************************************'
+        Write-Host ('************************************************************************************')
         exit 1
     }
     if ($deploymentStatus | Select-String -Pattern 'Canceled' -Quiet) {
-        Write-Host '::error::Deployment canceled in org.'
+        Write-Host ('**************************************************************************************')
+        Write-Host '*********************** Deployment Canceled  ******************************************'
+        Write-Host ('**************************************************************************************')
         exit 1
     }
-
-    Write-Host '::error::Unexpected deployment status; expected Succeeded, Failed, or Canceled.'
+    Write-Host ('***********************************************************************************************')
+    Write-Host '*********************** Unexpected Deployment Status  ******************************************'
+    Write-Host ('***********************************************************************************************')
+    Write-Host '::error::Unexpected Deployment status; expected Succeeded, Failed, or Canceled.'
     exit 1
 }
 

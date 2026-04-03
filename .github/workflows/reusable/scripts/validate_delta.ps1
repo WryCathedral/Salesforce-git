@@ -36,6 +36,10 @@ function Copy-DeltaArtifacts {
 function Invoke-DeltaValidation {
     $prTargetBranch = $env:SYSTEM_PULLREQUEST_TARGETBRANCH
 
+    Write-Host ('*' * 107)
+    Write-Host '*********************** Delta validation starting  ********************************************************'
+    Write-Host ('*' * 107)
+
     sf alias list
     Assert-SfExitCode 'sf alias list'
 
@@ -84,18 +88,26 @@ function Invoke-DeltaValidation {
     Assert-SfExitCode 'sf project deploy report'
 
     if ($deploymentStatus | Select-String -Pattern 'Succeeded' -Quiet) {
-        Write-Host 'Validation succeeded.'
+        Write-Host ('****************************************************************************************')
+        Write-Host '*********************** Validation Successful  ******************************************'
+        Write-Host ('****************************************************************************************')
         return
     }
     if ($deploymentStatus | Select-String -Pattern 'Failed' -Quiet) {
-        Write-Host '::error::Validation failed in org.'
+        Write-Host ('************************************************************************************')
+        Write-Host '*********************** Validation Failed  ******************************************'
+        Write-Host ('************************************************************************************')
         exit 1
     }
     if ($deploymentStatus | Select-String -Pattern 'Canceled' -Quiet) {
-        Write-Host '::error::Validation canceled in org.'
+        Write-Host ('**************************************************************************************')
+        Write-Host '*********************** Validation Canceled  ******************************************'
+        Write-Host ('**************************************************************************************')
         exit 1
     }
-
+    Write-Host ('***********************************************************************************************')
+    Write-Host '*********************** Unexpected Validation Status  ******************************************'
+    Write-Host ('***********************************************************************************************')
     Write-Host '::error::Unexpected validation status; expected Succeeded, Failed, or Canceled.'
     exit 1
 }
