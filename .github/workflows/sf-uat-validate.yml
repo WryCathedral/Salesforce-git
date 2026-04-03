@@ -6,10 +6,6 @@ on:
     branches: [uat]
     types: [opened, synchronize, reopened, ready_for_review]
 
-permissions:
-  contents: read
-  pull-requests: read
-
 concurrency:
   group: sf-uat-validate-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
