@@ -34,7 +34,7 @@ jobs:
       SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
       SF_ALIAS: ${{ secrets.SF_ALIAS }}
     steps:
-      - uses: ./.github/workflows/reusable/steps/deploy_delta/action.yml
+      - uses: ./.github/workflows/reusable/steps/deploy_delta
         with:
           environment_name: qa
           target_branch: develop

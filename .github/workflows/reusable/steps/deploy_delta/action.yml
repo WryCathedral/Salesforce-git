@@ -1,4 +1,5 @@
-# Composite: full git-delta deploy. Caller job must set env (including SF_* from secrets) — do not use secrets: on the step.
+# Composite: full git-delta deploy. Caller job must set env (including SF_* from secrets).
+# Local composite actions: use the directory path (contains action.yml), not .../action.yml.
 name: Deploy delta pipeline
 description: Checkout at merge/ref, CLI, JWT, authenticate, deploy delta
 inputs:
@@ -16,19 +17,19 @@ runs:
         fetch-depth: 0
         ref: ${{ github.event_name == 'workflow_dispatch' && inputs.target_branch || github.event.pull_request.merge_commit_sha }}
 
-    - uses: ./.github/workflows/reusable/steps/setup-node-js/action.yml
+    - uses: ./.github/workflows/reusable/steps/setup-node-js
 
-    - uses: ./.github/workflows/reusable/steps/install-salesforce-cli/action.yml
+    - uses: ./.github/workflows/reusable/steps/install-salesforce-cli
       with:
         sf_cli_version: ${{ env.SF_CLI_VERSION }}
 
-    - uses: ./.github/workflows/reusable/steps/install-git-delta-plugin/action.yml
+    - uses: ./.github/workflows/reusable/steps/install-git-delta-plugin
 
-    - uses: ./.github/workflows/reusable/steps/write-jwt-key/action.yml
+    - uses: ./.github/workflows/reusable/steps/write-jwt-key
       with:
         jwt_key: ${{ env.SF_JWT_PRIVATE_KEY }}
 
-    - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org/action.yml
+    - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org
       with:
         username: ${{ env.SF_USERNAME }}
         is_dev_hub: ${{ env.SF_IS_DEV_HUB }}

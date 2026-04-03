@@ -1,4 +1,5 @@
-# Composite: full git-delta validation. Caller job must set env (including SF_* from secrets) — do not use secrets: on the step.
+# Composite: full git-delta validation. Caller job must set env (including SF_* from secrets).
+# Local composite actions: use the directory path (contains action.yml), not .../action.yml.
 name: Validate delta pipeline
 description: Checkout, CLI, JWT, optional Code Analyzer, authenticate, validate delta, upload artifacts
 inputs:
@@ -12,30 +13,30 @@ runs:
       with:
         fetch-depth: 0
 
-    - uses: ./.github/workflows/reusable/steps/setup-node-js/action.yml
+    - uses: ./.github/workflows/reusable/steps/setup-node-js
 
-    - uses: ./.github/workflows/reusable/steps/install-salesforce-cli/action.yml
+    - uses: ./.github/workflows/reusable/steps/install-salesforce-cli
       with:
         sf_cli_version: ${{ env.SF_CLI_VERSION }}
 
-    - uses: ./.github/workflows/reusable/steps/install-git-delta-plugin/action.yml
+    - uses: ./.github/workflows/reusable/steps/install-git-delta-plugin
 
-    - uses: ./.github/workflows/reusable/steps/write-jwt-key/action.yml
+    - uses: ./.github/workflows/reusable/steps/write-jwt-key
       with:
         jwt_key: ${{ env.SF_JWT_PRIVATE_KEY }}
 
-    - uses: ./.github/workflows/reusable/steps/install-code-analyzer/action.yml
+    - uses: ./.github/workflows/reusable/steps/install-code-analyzer
       if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
 
-    - uses: ./.github/workflows/reusable/steps/run-code-analyzer/action.yml
+    - uses: ./.github/workflows/reusable/steps/run-code-analyzer
       if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
 
-    - uses: ./.github/workflows/reusable/steps/upload-code-analyzer-artifact/action.yml
+    - uses: ./.github/workflows/reusable/steps/upload-code-analyzer-artifact
       if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
       with:
         artifact_name: sf-code-analyzer-${{ inputs.environment_name }}
 
-    - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org/action.yml
+    - uses: ./.github/workflows/reusable/steps/authenticate-salesforce-org
       with:
         username: ${{ env.SF_USERNAME }}
         is_dev_hub: ${{ env.SF_IS_DEV_HUB }}
@@ -48,6 +49,6 @@ runs:
       env:
         SF_ALIAS: ${{ env.SF_ALIAS }}
 
-    - uses: ./.github/workflows/reusable/steps/upload-delta-artifact/action.yml
+    - uses: ./.github/workflows/reusable/steps/upload-delta-artifact
       with:
         artifact_name: Delta-Package-${{ inputs.environment_name }}
