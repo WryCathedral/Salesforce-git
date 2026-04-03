@@ -10,9 +10,8 @@
 #
 # Secrets: SF_JWT_PRIVATE_KEY, SF_CLIENT_ID, SF_USERNAME, SF_INSTANCE_URL, SF_ALIAS, SF_IS_DEV_HUB
 # Variables: SF_CLI_VERSION (optional)
-# Code Analyzer toggle — set either to the literal string "false" to skip (default: run):
-#   Repository variable: SF_RUN_CODE_ANALYZER
-#   Repository secret:    SF_RUN_CODE_ANALYZER   (optional; use if you prefer it in Secrets)
+# Code Analyzer toggle — repository variable SF_RUN_CODE_ANALYZER = "false" to skip (default: run).
+# (Secrets cannot be used in step `if:` expressions; use Variables only for this flag.)
 #################################################################################################################################
 
 name: Salesforce QA - validate
@@ -78,17 +77,17 @@ jobs:
           chmod 600 "$GITHUB_WORKSPACE/privatekey.key"
 
       - name: Install Salesforce Code Analyzer plugin
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         shell: pwsh
         run: ./.github/workflows/scripts/install_sf_code_analyzer.ps1
 
       - name: Run Code Analyzer on delta
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         shell: pwsh
         run: ./.github/workflows/scripts/run_sf_code_analyzer_on_delta.ps1
 
       - name: Upload Code Analyzer reports
-        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' && secrets.SF_RUN_CODE_ANALYZER != 'false' }}
+        if: ${{ vars.SF_RUN_CODE_ANALYZER != 'false' }}
         uses: actions/upload-artifact@v4
         with:
           name: sf-code-analyzer
