@@ -1,0 +1,9 @@
+# GitHub equivalent of sfdx-git-delta plugin install.
+name: SF install Git Delta plugin
+description: Install sfdx-git-delta plugin
+
+runs:
+  using: composite
+  steps:
+    - run: ./.github/workflows/templates/scripts/install_sfdx_git_delta_plugin.ps1
+      shell: pwsh

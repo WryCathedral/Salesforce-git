@@ -1,7 +1,6 @@
-name: Upload Code Analyzer reports
+name: SF upload Code Analyzer artifact
 inputs:
   artifact_name:
-    description: Artifact name (include env prefix to avoid collisions)
     required: true
 
 runs:

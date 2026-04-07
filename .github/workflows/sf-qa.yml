@@ -1,0 +1,26 @@
+# QA: entry workflow (outside templates). Pipeline template: templates/jobs/sf-delta-pipeline.yml → templates/steps/*
+# Add UAT: copy this file to sf-uat.yml, set branches + github_environment / environment_slug / target_branch.
+name: SF Delta · QA
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [opened, synchronize, reopened, ready_for_review, closed]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('sf-qa-validate-pr-{0}', github.event.pull_request.number) || format('sf-qa-deploy-{0}-develop', github.repository) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+
+run-name: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('Validate [QA] {0} · {1}', github.head_ref, github.event.pull_request.updated_at || github.run_id) || format('Deploy [QA] {0} · {1}', github.event_name == 'workflow_dispatch' && 'manual' || format('PR {0}', github.event.pull_request.number), github.sha) }}
+
+jobs:
+  sf-qa-pipeline:
+    uses: ./.github/workflows/templates/jobs/sf-delta-pipeline.yml
+    with:
+      run_validate: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+      run_deploy: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) }}
+      github_environment: qa
+      environment_slug: qa
+      target_branch: develop
+    secrets: inherit

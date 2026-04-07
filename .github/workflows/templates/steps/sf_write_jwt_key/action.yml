@@ -1,8 +1,8 @@
-name: Write JWT key file
-description: Write Connected App JWT private key to privatekey.key in workspace
+# Mirrors Certinia sf_dwonload_jwt_token — materialize JWT PEM for Connected App login.
+name: SF write JWT key
+description: Write JWT private key to workspace
 inputs:
   jwt_key:
-    description: PEM contents (pass secrets.SF_JWT_PRIVATE_KEY from workflow)
     required: true
 
 runs:

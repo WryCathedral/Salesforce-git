@@ -1,0 +1,8 @@
+name: SF install Code Analyzer
+description: Install Salesforce Code Analyzer plugin
+
+runs:
+  using: composite
+  steps:
+    - run: ./.github/workflows/templates/scripts/install_sf_code_analyzer.ps1
+      shell: pwsh

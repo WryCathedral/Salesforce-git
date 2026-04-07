@@ -1,5 +1,5 @@
-name: Authorize Salesforce org (JWT)
-description: sf org login jwt via authenticate_org.sh
+# Mirrors Certinia sf_authenticate_org — JWT login to Salesforce.
+name: SF authenticate org
 inputs:
   username:
     required: true
@@ -16,7 +16,7 @@ runs:
   using: composite
   steps:
     - run: |
-        bash ./.github/workflows/reusable/scripts/authenticate_org.sh \
+        bash ./.github/workflows/templates/scripts/authenticate_org.sh \
           "$SF_USERNAME" "$SF_IS_DEV_HUB" "$SF_CLIENT_ID" "$SF_INSTANCE_URL" "$SF_ALIAS" \
           "$GITHUB_WORKSPACE/privatekey.key"
       shell: bash

@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Dry-run deploy (validation) of git-delta package against a Salesforce org.
-    Expects env from reusable workflows: SYSTEM_PULLREQUEST_TARGETBRANCH (PR base ref).
+    Expects env from QA pipeline: SYSTEM_PULLREQUEST_TARGETBRANCH (PR base ref).
 #>
 [CmdletBinding()]
 param(

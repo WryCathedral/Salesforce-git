@@ -1,0 +1,8 @@
+name: SF run Code Analyzer on delta
+description: Run code analyzer against git delta
+
+runs:
+  using: composite
+  steps:
+    - run: ./.github/workflows/templates/scripts/run_sf_code_analyzer_on_delta.ps1
+      shell: pwsh

@@ -1,8 +1,8 @@
-name: Setup Node.js
-description: Node for npm global Salesforce CLI install
+# Mirrors Certinia templates/steps pattern — Node for global npm (SF CLI).
+name: SF setup Node.js
+description: Setup Node.js for Salesforce CLI install
 inputs:
   node_version:
-    description: Node major version (LTS aligned with Actions JS runtime)
     required: false
     default: '24'
 

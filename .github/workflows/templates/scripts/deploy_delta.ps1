@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Deploy git-delta package to a Salesforce org.
-    Expects env from reusable workflows: BUILD_SOURCEBRANCH (merge base or dispatch target).
+    Expects env from QA pipeline: BUILD_SOURCEBRANCH (merge base or dispatch target).
 #>
 [CmdletBinding()]
 param(
