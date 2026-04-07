@@ -1,4 +1,5 @@
 #requires -Version 7.0
+# Optional full-metadata validation: deploy entire force-app/ in one shot with --dry-run (no delta Git logic).
 <#
 .SYNOPSIS
     Validate (dry-run) full deploy of force-app against a Salesforce org.
@@ -10,6 +11,7 @@ param(
     [string]$Alias
 )
 
+# Maps non-zero Salesforce CLI exits to a failed GitHub Actions step.
 function Assert-SfExitCode {
     param(
         [Parameter(Mandatory = $true)]
@@ -22,6 +24,7 @@ function Assert-SfExitCode {
 }
 
 function Invoke-FullValidation {
+    # Single-folder deploy of all tracked metadata — heavier than delta but simple to reason about.
     $sourceDir = 'force-app'
     if (-not (Test-Path -LiteralPath $sourceDir)) {
         Write-Host "::error::Source directory '$sourceDir' not found."

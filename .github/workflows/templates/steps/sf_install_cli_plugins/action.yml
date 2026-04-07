@@ -1,4 +1,4 @@
-# Mirrors Certinia sf_install_CLI_plugins — install @salesforce/cli + prerequisites via npm.
+# Installs the Salesforce CLI (`sf`) at a specific version so plugins and scripts share one toolchain.
 name: SF install CLI plugins
 description: Install Salesforce CLI globally
 inputs:

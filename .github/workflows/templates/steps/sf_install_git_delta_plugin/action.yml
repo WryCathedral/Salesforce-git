@@ -1,4 +1,4 @@
-# GitHub equivalent of sfdx-git-delta plugin install.
+# sfdx-git-delta (`sf sgd`) — computes metadata differences between Git refs for package.xml generation.
 name: SF install Git Delta plugin
 description: Install sfdx-git-delta plugin
 

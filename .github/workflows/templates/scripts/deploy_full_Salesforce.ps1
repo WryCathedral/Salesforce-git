@@ -1,4 +1,5 @@
 #requires -Version 7.0
+# Optional full deploy: pushes all of force-app/ to the org with RunLocalTests (no Git delta).
 <#
 .SYNOPSIS
     Deploy full force-app metadata to a Salesforce org.
@@ -22,6 +23,7 @@ function Assert-SfExitCode {
 }
 
 function Invoke-FullDeploy {
+    # Deploy everything under force-app — use when you intentionally want a full sync, not incremental.
     $sourceDir = 'force-app'
     if (-not (Test-Path -LiteralPath $sourceDir)) {
         Write-Host "::error::Source directory '$sourceDir' not found."

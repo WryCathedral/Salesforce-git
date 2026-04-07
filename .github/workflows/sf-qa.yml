@@ -1,26 +1,122 @@
-# QA: entry workflow (outside templates). Pipeline template: templates/jobs/sf-delta-pipeline.yml → templates/steps/*
-# Add UAT: copy this file to sf-uat.yml, set branches + github_environment / environment_slug / target_branch.
+# QA Salesforce pipeline: validate changed metadata on open PRs, deploy after merge to develop (or run manually).
+# Reusable step logic lives under .github/workflows/templates/steps/ (composite actions).
 name: SF Delta · QA
 
+# When the workflow runs: PR activity against develop, plus manual "Run workflow" from the Actions tab.
 on:
   pull_request:
     branches: [develop]
     types: [opened, synchronize, reopened, ready_for_review, closed]
   workflow_dispatch:
 
+# One concurrent run per PR (validate) or per repo deploy, so pushes do not overlap confusingly.
 concurrency:
   group: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('sf-qa-validate-pr-{0}', github.event.pull_request.number) || format('sf-qa-deploy-{0}-develop', github.repository) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
 
-run-name: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('Validate [QA] {0} · {1}', github.head_ref, github.event.pull_request.updated_at || github.run_id) || format('Deploy [QA] {0} · {1}', github.event_name == 'workflow_dispatch' && 'manual' || format('PR {0}', github.event.pull_request.number), github.sha) }}
+# Actions UI title: validate_<source-branch>_<date> on PRs; deploy_<target-branch>_<date> on merge or manual.
+run-name: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('validate_{0}_{1}', github.head_ref, github.event.pull_request.updated_at || github.run_id) || (github.event_name == 'workflow_dispatch' && format('deploy_develop_{0}', github.run_id) || format('deploy_{0}_{1}', github.base_ref, github.event.pull_request.merged_at || github.run_id)) }}
+
+# Minimal token rights: read repo, upload workflow artifacts (reports, delta packages).
+permissions:
+  contents: read
+  actions: write
 
 jobs:
-  sf-qa-pipeline:
-    uses: ./.github/workflows/templates/jobs/sf-delta-pipeline.yml
-    with:
-      run_validate: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
-      run_deploy: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) }}
-      github_environment: qa
-      environment_slug: qa
-      target_branch: develop
-    secrets: inherit
+  sf-delta:
+    # Job title flips between "Validating" and "Deploying" so checks in GitHub are easy to recognize.
+    name: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('Validating ({0})', 'qa') || format('Deploying ({0})', 'qa') }}
+    # Run validate on open/sync PRs; run deploy on manual dispatch or when a PR to develop is merged (closed + merged).
+    if: ${{ (github.event_name == 'pull_request' && github.event.action != 'closed') || (github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true)) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 200
+    # GitHub Environment "qa" — holds secrets and optional protection rules for the QA org.
+    environment: qa
+    env:
+      # PR base branch (e.g. develop) — used by scripts to decide tests/rules; empty on deploy-only runs.
+      SYSTEM_PULLREQUEST_TARGETBRANCH: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && format('refs/heads/{0}', github.base_ref) || '' }}
+      # Source ref for this run (PR head, merge commit, or develop on manual) — deploy script uses it for test level.
+      BUILD_SOURCEBRANCH: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && github.ref || (github.event_name == 'workflow_dispatch' && format('refs/heads/{0}', 'develop') || format('refs/heads/{0}', github.base_ref)) }}
+      SF_CLI_VERSION: ${{ vars.SF_CLI_VERSION != '' && vars.SF_CLI_VERSION || '2.100.0' }}
+      # Set repository variable SF_RUN_CODE_ANALYZER to "false" to skip static analysis on PRs.
+      SF_RUN_CODE_ANALYZER: ${{ vars.SF_RUN_CODE_ANALYZER }}
+      SF_JWT_PRIVATE_KEY: ${{ secrets.SF_JWT_PRIVATE_KEY }}
+      SF_USERNAME: ${{ secrets.SF_USERNAME }}
+      SF_IS_DEV_HUB: ${{ secrets.SF_IS_DEV_HUB }}
+      SF_CLIENT_ID: ${{ secrets.SF_CLIENT_ID }}
+      SF_INSTANCE_URL: ${{ secrets.SF_INSTANCE_URL }}
+      SF_ALIAS: ${{ secrets.SF_ALIAS }}
+    steps:
+      # Checkout PR merge preview (GitHub merges head into base) — used for validation and delta against base.
+      - uses: actions/checkout@v6
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+        with:
+          fetch-depth: 0
+
+      # Checkout exact branch/commit to deploy: manual uses develop; merged PR uses the merge commit on develop.
+      - uses: actions/checkout@v6
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) }}
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'develop' || github.event.pull_request.merge_commit_sha }}
+
+      # Install Node.js so npm can install the Salesforce CLI globally.
+      - uses: ./.github/workflows/templates/steps/sf_setup_node_js
+
+      # Install the pinned @salesforce/cli version used by all later sf commands.
+      - uses: ./.github/workflows/templates/steps/sf_install_cli_plugins
+        with:
+          sf_cli_version: ${{ env.SF_CLI_VERSION }}
+
+      # Plugin that compares Git commits to build a manifest of changed metadata (delta deploys).
+      - uses: ./.github/workflows/templates/steps/sf_install_git_delta_plugin
+
+      # Write the JWT private key file for headless org login (Connected App).
+      - uses: ./.github/workflows/templates/steps/sf_write_jwt_key
+        with:
+          jwt_key: ${{ env.SF_JWT_PRIVATE_KEY }}
+
+      # Optional: install Salesforce Code Analyzer plugin (skipped if SF_RUN_CODE_ANALYZER is false).
+      - uses: ./.github/workflows/templates/steps/sf_install_code_analyzer
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && env.SF_RUN_CODE_ANALYZER != 'false' }}
+
+      # Run static analysis on the delta-generated source (PR validation only).
+      - uses: ./.github/workflows/templates/steps/sf_run_code_analyzer
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && env.SF_RUN_CODE_ANALYZER != 'false' }}
+
+      # Upload analyzer reports as a workflow artifact for download from the Actions run.
+      - uses: ./.github/workflows/templates/steps/sf_upload_code_analyzer_artifact
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' && env.SF_RUN_CODE_ANALYZER != 'false' }}
+        with:
+          artifact_name: sf-code-analyzer-qa
+
+      # Log into the target Salesforce org using JWT (alias matches SF_ALIAS secret / env).
+      - uses: ./.github/workflows/templates/steps/sf_authenticate_org
+        with:
+          username: ${{ env.SF_USERNAME }}
+          is_dev_hub: ${{ env.SF_IS_DEV_HUB }}
+          client_id: ${{ env.SF_CLIENT_ID }}
+          instance_url: ${{ env.SF_INSTANCE_URL }}
+          alias: ${{ env.SF_ALIAS }}
+
+      # Build delta package from Git and validate deploy without applying changes (--dry-run) in QA.
+      - name: Validate delta package (dry-run)
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+        run: ./.github/workflows/templates/scripts/validate_delta.ps1 "$env:SF_ALIAS"
+        shell: pwsh
+        env:
+          SF_ALIAS: ${{ env.SF_ALIAS }}
+
+      # Save generated package/destructive manifest XML as an artifact for review or reuse.
+      - uses: ./.github/workflows/templates/steps/sf_upload_delta_artifact
+        if: ${{ github.event_name == 'pull_request' && github.event.action != 'closed' }}
+        with:
+          artifact_name: Delta-Package-qa
+
+      # Real deploy of the same delta logic to QA (not dry-run) — manual or post-merge only.
+      - name: Deploy delta package
+        if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) }}
+        run: ./.github/workflows/templates/scripts/deploy_delta.ps1 "$env:SF_ALIAS"
+        shell: pwsh
+        env:
+          SF_ALIAS: ${{ env.SF_ALIAS }}

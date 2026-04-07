@@ -1,4 +1,5 @@
 #requires -Version 7.0
+# Post-merge / manual: same delta generation as validate, but runs a real deploy (no --dry-run) to the org.
 <#
 .SYNOPSIS
     Deploy git-delta package to a Salesforce org.
@@ -11,6 +12,7 @@ param(
     [string]$Alias
 )
 
+# Shared helper: fail the step with a clear ::error line if any `sf` command exits non-zero.
 function Assert-SfExitCode {
     param(
         [Parameter(Mandatory = $true)]
@@ -25,6 +27,7 @@ function Assert-SfExitCode {
 function Invoke-DeltaDeploy {
     $sourceBranch = $env:BUILD_SOURCEBRANCH
 
+    # --- Build manifests from Git (HEAD vs parent) using the same ignore rules as validation ---
     Write-Host ('*' * 107)
     Write-Host '*********************** Delta deployment starting  ********************************************************'
     Write-Host ('*' * 107)
@@ -52,6 +55,7 @@ function Invoke-DeltaDeploy {
     Write-Host '--- destructiveChanges.xml ---'
     Get-Content -LiteralPath 'destructiveChanges/destructiveChanges.xml'
 
+    # main branch deploys run all local tests; other branches skip tests for speed (policy may vary).
     $runTests = $sourceBranch -match 'refs/heads/main'
     if ($runTests) {
         Write-Host 'Deploying with RunLocalTests (main branch).'
@@ -65,6 +69,7 @@ function Invoke-DeltaDeploy {
     }
     Assert-SfExitCode 'sf project deploy start'
 
+    # Confirm the org finished processing and surface Succeeded/Failed/Canceled to exit code.
     $deploymentStatus = sf project deploy report --target-org $Alias --use-most-recent --wait 120
     Assert-SfExitCode 'sf project deploy report'
 

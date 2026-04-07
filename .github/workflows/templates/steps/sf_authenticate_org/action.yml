@@ -1,4 +1,4 @@
-# Mirrors Certinia sf_authenticate_org — JWT login to Salesforce.
+# Non-interactive login: JWT flow with External Client App — required before any deploy/validate against the org.
 name: SF authenticate org
 inputs:
   username:

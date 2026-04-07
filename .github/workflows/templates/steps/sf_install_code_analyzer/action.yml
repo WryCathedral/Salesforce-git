@@ -1,3 +1,4 @@
+# Salesforce Code Analyzer plugin — used for static analysis / security rules on metadata (optional on PRs).
 name: SF install Code Analyzer
 description: Install Salesforce Code Analyzer plugin
 

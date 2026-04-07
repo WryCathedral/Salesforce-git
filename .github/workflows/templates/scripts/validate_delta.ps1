@@ -1,4 +1,5 @@
 #requires -Version 7.0
+# End-to-end PR check: generate delta manifests from Git, then validate deploy to the org without applying changes.
 <#
 .SYNOPSIS
     Dry-run deploy (validation) of git-delta package against a Salesforce org.
@@ -11,6 +12,7 @@ param(
     [string]$Alias
 )
 
+# Shared helper: stop the job with a GitHub Actions log annotation if `sf` returned non-zero.
 function Assert-SfExitCode {
     param(
         [Parameter(Mandatory = $true)]
@@ -22,6 +24,7 @@ function Assert-SfExitCode {
     }
 }
 
+# Snapshot package.xml / destructiveChanges into artifacts/ with timestamps for the workflow artifact upload.
 function Copy-DeltaArtifacts {
     $timestamp = (Get-Date).ToString('yyyyMMdd_HHmmss')
     $artifactFolder = 'artifacts'
@@ -36,6 +39,7 @@ function Copy-DeltaArtifacts {
 function Invoke-DeltaValidation {
     $prTargetBranch = $env:SYSTEM_PULLREQUEST_TARGETBRANCH
 
+    # --- Generate delta (HEAD vs parent) using repo ignore/include rules for destructive changes ---
     Write-Host ('*' * 107)
     Write-Host '*********************** Delta validation starting  ********************************************************'
     Write-Host ('*' * 107)
@@ -60,12 +64,14 @@ function Invoke-DeltaValidation {
 
     Copy-DeltaArtifacts
 
+    # Echo manifests to the log so PR reviewers see exactly what metadata is in scope.
     Write-Host '--- package.xml ---'
     Get-Content -LiteralPath 'package/package.xml'
     Write-Host '--- destructiveChanges.xml ---'
     Get-Content -LiteralPath 'destructiveChanges/destructiveChanges.xml'
 
     $packageXmlRaw = Get-Content -LiteralPath 'package/package.xml' -Raw
+    # Run local tests when targeting main or when certain metadata types need compilation coverage.
     $useRunLocalTests =
         ($prTargetBranch -match 'refs/heads/main') -or
         ($packageXmlRaw -match '<name>ApexClass</name>') -or
@@ -84,6 +90,7 @@ function Invoke-DeltaValidation {
     }
     Assert-SfExitCode 'sf project deploy start (dry-run)'
 
+    # Read the async deploy result from the org and map to success/failure for the pipeline.
     $deploymentStatus = sf project deploy report --target-org $Alias --use-most-recent --wait 120
     Assert-SfExitCode 'sf project deploy report'
 

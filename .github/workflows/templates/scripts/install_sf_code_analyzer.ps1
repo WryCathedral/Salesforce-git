@@ -1,3 +1,4 @@
+# Installs the Salesforce Code Analyzer CLI plugin for static analysis (`sf code-analyzer`).
 param()
 
 function Install-SfdxScanner {

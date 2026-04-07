@@ -1,4 +1,4 @@
-# Mirrors Certinia templates/steps pattern — Node for global npm (SF CLI).
+# Provides Node/npm on the runner — required because Salesforce CLI is installed globally via npm.
 name: SF setup Node.js
 description: Setup Node.js for Salesforce CLI install
 inputs:
@@ -9,6 +9,7 @@ inputs:
 runs:
   using: composite
   steps:
+    # Pin Node so CLI installs stay reproducible across GitHub runner image updates.
     - uses: actions/setup-node@v6
       with:
         node-version: ${{ inputs.node_version }}

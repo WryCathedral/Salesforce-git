@@ -1,3 +1,4 @@
+# Uploads generated manifest XML copies from the artifacts/ folder so reviewers can inspect what would deploy.
 name: SF upload delta package artifact
 inputs:
   artifact_name:

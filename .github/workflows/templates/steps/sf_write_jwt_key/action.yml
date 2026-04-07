@@ -1,4 +1,4 @@
-# Mirrors Certinia sf_dwonload_jwt_token — materialize JWT PEM for Connected App login.
+# Writes the External Client App JWT private key to disk — `sf org login jwt` reads this file; never commit the key.
 name: SF write JWT key
 description: Write JWT private key to workspace
 inputs:

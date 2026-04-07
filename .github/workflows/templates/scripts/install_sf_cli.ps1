@@ -1,3 +1,4 @@
+# Installs the Salesforce CLI globally via npm so `sf` is available to the rest of the pipeline.
 Param (
     [Parameter(Position = 0)]
     [string]$sfCliVersion
@@ -5,6 +6,7 @@ Param (
 )
 
 function installSFGitDeltaPlugin {
+    # Pin @salesforce/cli to the version requested by the workflow (reproducible builds).
 
     Write-Host "***********************************************************************************************************"
     Write-Host "***********************  Installing Salesforce CLI" $sfCliVersion  "***************************************"

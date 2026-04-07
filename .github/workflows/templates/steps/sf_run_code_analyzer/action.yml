@@ -1,3 +1,4 @@
+# Builds a small delta workspace then runs `sf code-analyzer` and writes CSV output under reports/.
 name: SF run Code Analyzer on delta
 description: Run code analyzer against git delta
 
