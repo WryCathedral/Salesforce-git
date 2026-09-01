@@ -1,5 +1,5 @@
 public class firstclass {
     public static void main(){
-        system.debug('Test Github actions 7');
+        system.debug('Test Github actions 8');
     }
 }
